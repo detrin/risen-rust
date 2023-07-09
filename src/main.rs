@@ -34,7 +34,7 @@ fn generate_templeos_pattern() -> Vec<(f64, f64)> {
 
                 freqs.push((freq, amplitude));
             }
-            add_freq += 0.131147541
+            add_freq += 0.131147541;
         }
         base_freq += 2.0;
     }
@@ -200,6 +200,7 @@ impl Iterator for MelodyAudio {
 fn main() {
     let matches = command!() 
         .arg(arg!([output] "The output select from ['file', 'speaker']"))
+        .arg(arg!([tone_type] "The type of tone played from ['simple', 'faded', 'templeos']"))
         .arg(arg!([tempo] "The tempo of the song"))
         .get_matches();
 
@@ -208,6 +209,13 @@ fn main() {
     if let Some(tempo_str) = matches.get_one::<String>("tempo") {
         tempo = tempo_str.parse::<u64>().unwrap();
     }
+    let tone_type = matches.get_one::<String>("tone_type").unwrap();
+    let tone_type = match tone_type.as_str() {
+        "simple" => Tone::Simple,
+        "faded" => Tone::Faded,
+        "templeos" => Tone::TempleOS,
+        _ => panic!("Invalid tone type"),
+    };
 
     let melody_first = [
         (Note { letter: 'd', octave: 5 }, 0.5),
@@ -260,7 +268,7 @@ fn main() {
     melody_tones = melody_tones.iter().map(|(note, duration)| (*note, *duration * tone_length)).collect();
 
     let melody = Melody {
-        melody: melody_tones.iter().map(|(note, duration)| Tone::TempleOS(*note, *duration)).collect(),
+        melody: melody_tones.iter().map(|(note, duration)| tone_type(*note, *duration)).collect(),
         sample_rate: 44_100,
         tone_length: 0.98,
     };
